@@ -148,5 +148,11 @@ int tree_from_index(ObjectID *id_out) {
     strncpy(e->name, index.entries[i].path, sizeof(e->name) - 1);
     e->name[sizeof(e->name) - 1] = '\0';
     e->hash = index.entries[i].hash;
+    void *data = NULL;
+   size_t len = 0;
+
+   tree_serialize(&tree, &data, &len);
+   object_write(OBJ_TREE, data, len, id_out);
+   free(data);
     return 0;
 }
