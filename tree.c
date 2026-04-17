@@ -19,6 +19,7 @@
 #include "index.h"
 #include "pes.h"
 
+int object_write(ObjectType type, const void *data, size_t len, ObjectID *out);
 // ─── Mode Constants ─────────────────────────────────────────────────────────
 
 #define MODE_FILE      0100644
@@ -132,43 +133,47 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
 //   - object_write    : save that binary buffer to the store as OBJ_TREE
 //
 // Returns 0 on success, -1 on error.
-int tree_from_index(ObjectID *id_out) {
-    // TODO: Implement recursive tree building
-    // (See Lab Appendix for logical steps)
-    Index index;
+// ─── TODO: Implement these ──────────────────────────────────────────────────
 
-    if (index_load(&index) != 0) {
-        fprintf(stderr, "error: failed to load index\n");
+int tree_from_index(ObjectID *id_out)
+{
+    Index index;
+    memset(&index, 0, sizeof(Index));
+
+    if (index_load(&index) != 0)
         return -1;
-    }
 
     Tree tree;
+    memset(&tree, 0, sizeof(Tree));
+
     tree.count = 0;
 
     for (int i = 0; i < index.count; i++) {
-        TreeEntry *e = &tree.entries[tree.count];
+        TreeEntry *e = &tree.entries[tree.count++];
 
         e->mode = index.entries[i].mode;
-        strncpy(e->name, index.entries[i].path, sizeof(e->name) - 1);
-        e->name[sizeof(e->name) - 1] = '\0';
         e->hash = index.entries[i].hash;
 
-        tree.count++;
+        strncpy(e->name,
+                index.entries[i].path,
+                sizeof(e->name) - 1);
+
+        e->name[sizeof(e->name) - 1] = '\0';
     }
 
     void *data = NULL;
     size_t len = 0;
 
-    if (tree_serialize(&tree, &data, &len) != 0) {
-        fprintf(stderr, "error: tree serialize failed\n");
+    if (tree_serialize(&tree, &data, &len) != 0)
         return -1;
-    }
 
-    if (object_write(OBJ_TREE, data, len, id_out) != 0) {
-        fprintf(stderr, "error: object write failed\n");
-        free(data);
-        return -1;
-    }
+    int rc = object_write(OBJ_TREE, data, len, id_out);
 
     free(data);
+
+    return rc;
 }
+
+
+
+
