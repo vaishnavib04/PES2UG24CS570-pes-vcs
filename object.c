@@ -166,6 +166,15 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     
     if (object_exists(&id)) {
     *id_out = id;
+    
+    char path[512], tmp[512];
+object_path(&id, path, sizeof(path));
+
+snprintf(tmp, sizeof(tmp), "%s.tmp", path);
+
+FILE *f = fopen(tmp, "wb");
+fwrite(full, 1, header_len + len, f);
+fclose(f);
     return 0;
 }
     return 0;
