@@ -196,6 +196,7 @@ int head_update(const ObjectID *new_commit) {
 int commit_create(const char *message, ObjectID *commit_id_out) {
     // TODO: Implement commit creation
     // (See Lab Appendix for logical steps)
+  
     ObjectID tree_id;
 
     if (tree_from_index(&tree_id) != 0)
@@ -212,14 +213,38 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
     if (has_parent) {
         c.has_parent = 1;
         c.parent = parent_id;
+    } else {
+        c.has_parent = 0;
     }
 
+    // FIX: pes_author is a FUNCTION, not string
     snprintf(c.author, sizeof(c.author), "%s", pes_author());
+
     c.timestamp = (uint64_t)time(NULL);
 
     snprintf(c.message, sizeof(c.message), "%s", message ? message : "");
 
-    (void)commit_id_out;
+    void *buf = NULL;
+    size_t len = 0;
 
-    return -1;
+    if (commit_serialize(&c, &buf, &len) != 0)
+        return -1;
+
+    ObjectID commit_id;
+
+    if (object_write(OBJ_COMMIT, buf, len, &commit_id) != 0) {
+        free(buf);
+        return -1;
+    }
+
+    free(buf);
+
+    if (head_update(&commit_id) != 0)
+        return -1;
+
+    if (commit_id_out)
+        *commit_id_out = commit_id;
+
+    return 0;
 }
+
