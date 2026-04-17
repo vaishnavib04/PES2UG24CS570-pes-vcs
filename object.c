@@ -175,7 +175,8 @@ snprintf(tmp, sizeof(tmp), "%s.tmp", path);
 FILE *f = fopen(tmp, "wb");
 fwrite(full, 1, header_len + len, f);
 fclose(f);
-    return 0;
-}
-    return 0;
+ rename(tmp, path);
+
+*id_out = id;
+return 0;
 }
