@@ -136,23 +136,39 @@ int tree_from_index(ObjectID *id_out) {
     // TODO: Implement recursive tree building
     // (See Lab Appendix for logical steps)
     Index index;
-    index_load(&index);
+
+    if (index_load(&index) != 0) {
+        fprintf(stderr, "error: failed to load index\n");
+        return -1;
+    }
+
     Tree tree;
     tree.count = 0;
 
     for (int i = 0; i < index.count; i++) {
-    TreeEntry *e = &tree.entries[tree.count];
-    tree.count++;
-    }
-    e->mode = index.entries[i].mode;
-    strncpy(e->name, index.entries[i].path, sizeof(e->name) - 1);
-    e->name[sizeof(e->name) - 1] = '\0';
-    e->hash = index.entries[i].hash;
-    void *data = NULL;
-   size_t len = 0;
+        TreeEntry *e = &tree.entries[tree.count];
 
-   tree_serialize(&tree, &data, &len);
-   object_write(OBJ_TREE, data, len, id_out);
-   free(data);
-    return 0;
+        e->mode = index.entries[i].mode;
+        strncpy(e->name, index.entries[i].path, sizeof(e->name) - 1);
+        e->name[sizeof(e->name) - 1] = '\0';
+        e->hash = index.entries[i].hash;
+
+        tree.count++;
+    }
+
+    void *data = NULL;
+    size_t len = 0;
+
+    if (tree_serialize(&tree, &data, &len) != 0) {
+        fprintf(stderr, "error: tree serialize failed\n");
+        return -1;
+    }
+
+    if (object_write(OBJ_TREE, data, len, id_out) != 0) {
+        fprintf(stderr, "error: object write failed\n");
+        free(data);
+        return -1;
+    }
+
+    free(data);
 }
