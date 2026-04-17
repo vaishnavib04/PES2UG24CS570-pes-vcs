@@ -137,34 +137,7 @@ int index_status(const Index *index) {
 int index_load(Index *index) {
     // TODO: Implement index loading
     // (See Lab Appendix for logical steps)
-    FILE *fp = fopen(".pes/index", "r");
-    if (!fp) {
-        index->count = 0;
-        return 0; // empty index is valid
-    }
-
-    index->count = 0;
-
-    while (!feof(fp)) {
-        IndexEntry *e = &index->entries[index->count];
-
-        char hash_hex[65];
-        int read = fscanf(fp, "%o %64s %lu %u %s",
-                          &e->mode,
-                          hash_hex,
-                          &e->mtime_sec,
-                          &e->size,
-                          e->path);
-
-        if (read != 5) break;
-
-        hex_to_hash(hash_hex, &e->hash);
-
-        index->count++;
-    }
-
-    fclose(fp);
-    return 0;
+    
 }
 
 // Save the index to .pes/index atomically.
@@ -178,10 +151,27 @@ int index_load(Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_save(const Index *index) {
-    // TODO: Implement atomic index saving
-    // (See Lab Appendix for logical steps)
-    (void)index;
-    return -1;
+    FILE *fp = fopen(".pes/index.tmp", "w");
+    if (!fp) return -1;
+
+    for (int i = 0; i < index->count; i++) {
+        char hex[65];
+        hash_to_hex(&index->entries[i].hash, hex);
+
+        fprintf(fp, "%u %s %lu %u %s\n",
+                index->entries[i].mode,
+                hex,
+                (unsigned long)index->entries[i].mtime_sec,
+                index->entries[i].size,
+                index->entries[i].path);
+    }
+
+    fflush(fp);
+    fsync(fileno(fp));
+    fclose(fp);
+
+    rename(".pes/index.tmp", ".pes/index");
+    return 0;
 }
 
 // Stage a file for the next commit.
