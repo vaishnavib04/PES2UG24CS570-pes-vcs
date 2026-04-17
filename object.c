@@ -160,4 +160,8 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
 
     memcpy(full, header, header_len);
     memcpy(full + header_len, data, len);
+    
+    ObjectID id;
+    compute_hash(full, header_len + len, &id);
+    return 0;
 }
