@@ -163,5 +163,10 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     
     ObjectID id;
     compute_hash(full, header_len + len, &id);
+    
+    if (object_exists(&id)) {
+    *id_out = id;
+    return 0;
+}
     return 0;
 }
