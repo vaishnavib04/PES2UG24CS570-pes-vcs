@@ -113,6 +113,11 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     compute_hash(full, header_len + len, &id);
     
     *id_out = id;
+    
+    if (object_exists(&id)) {
+    *id_out = id;
+    return 0;
+}
 
     (void)id_out;
     return 0;
