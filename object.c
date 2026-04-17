@@ -148,16 +148,16 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
 // Returns 0 on success, -1 on error (file not found, corrupt, etc.).
 int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_t *len_out) {
     // TODO: Implement
-    char path[512], tmp[512];
-object_path(&id, path, sizeof(path));
+    char header[128];
+    char full[8192];
 
-snprintf(tmp, sizeof(tmp), "%s.tmp", path);
+    const char *type_str =
+        (type == OBJ_BLOB) ? "blob" :
+        (type == OBJ_TREE) ? "tree" : "commit";
 
-FILE *f = fopen(tmp, "wb");
-fwrite(full, 1, header_len + len, f);
-fclose(f);
+    int header_len = snprintf(header, sizeof(header),
+                              "%s %zu\0", type_str, len);
 
-rename(tmp, path);
-    (void)id; (void)type_out; (void)data_out; (void)len_out;
-    return -1;
+    memcpy(full, header, header_len);
+    memcpy(full + header_len, data, len);
 }
